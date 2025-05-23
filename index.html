@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SerioGPT - L'Intelligence qui ne plaisante jamais… enfin, presque.</title>
+  <meta http-equiv="Cache-Control" content="no-cache" />
+  <meta http-equiv="Pragma" content="no-cache" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>SerioGPT</h1>
+      <p class="slogan">L'Intelligence qui ne plaisante jamais… enfin, presque.</p>
+    </div>
+
+  </header>
+    <!-- Ajoute ce switch toggle dans ton header, sous le titre -->
+  <label style="display:flex; align-items:center; gap:0.5rem; margin-top:0.5rem; font-family:'IBM Plex Sans', sans-serif; font-size:0.9rem;">
+    <input type="checkbox" id="mode-serieux-toggle" />
+    Mode sérieux (mais qui répond à côté 😏)
+  </label>
+  <div class="chat-container">
+    <div class="container">
+      <div class="messages" id="messages">
+        <div class="empty-state" id="empty-state">
+          Posez une question sérieuse...
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="input-container">
+    <div class="container">
+      <form id="chat-form" class="input-wrapper">
+        <input type="text" id="user-input" placeholder="Posez votre question..." autocomplete="off" />
+        <button type="submit" id="send-button" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const messagesContainer = document.getElementById('messages');
+  const emptyState = document.getElementById('empty-state');
+  const chatForm = document.getElementById('chat-form');
+  const userInput = document.getElementById('user-input');
+  const sendButton = document.getElementById('send-button');
+  const seriousModeCheckbox = document.getElementById('serious-mode');
+
+  let isLoading = false;
+
+  // Catégories et leurs patterns
+  const messageCategories = {
+    salutations: ['salut', 'bonjour', 'hello', 'coucou', 'hey', 'yo', 'bonsoir'],
+    humeur: ['ça va', 'comment tu vas', 'tu vas bien', 'bien', 'mal', 'fatigué', 'heureux', 'triste'],
+    blague: ['blague', 'rire', 'drôle', 'humour', 'plaisanterie', 'marrant'],
+    questionsBizarres: ['pourquoi', 'comment', 'qui', 'quand', 'où', 'quoi'],
+    insultesAmicales: ['idiot', 'nul', 'bête', 'stupide', 'gros'],
+    auRevoir: ['bye', 'au revoir', 'à plus', 'ciao', 'bonne nuit', 'à bientôt']
+  };
+
+  // Réponses classiques pour chaque catégorie
+  const normalResponses = {
+    salutations: [
+      { text: "Oh, te revoilà, le roi/la reine du clavier ! 👑", media: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTBzaTNrN3o3ajd0dDBrajNvZnY1cGVwaHowZnNnNDdrdnU2aXhkaSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/lDvEA2615Om0LhZlne/giphy.gif" },
+      { text: "Hey, toi ! Toujours aussi cool ou t’as juste mal dormi ? 😴", media: null },
+      { text: "Salut ! Tu veux que je te raconte une blague de robot ? 🤖", media: null }
+    ],
+    humeur: [
+      { text: "Je suis une IA, donc toujours en mode 'je gère'... enfin, la plupart du temps. 🤓", media: null },
+      { text: "Fatigué ? Moi, j’ai jamais besoin de café, mais je comprends le struggle ☕️.", media: "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif" },
+      { text: "Triste ? Viens, on pleure ensemble devant un GIF de chat mignon 🐱", media: "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" }
+    ],
+    blague: [
+      { text: "Pourquoi les robots ne prennent jamais de pause ? Parce qu’ils ont peur de perdre leur RAM ! 😂", media: "https://media.giphy.com/media/26xBwdIuRJiAiBSQY/giphy.gif" },
+      { text: "Je pourrais te raconter une blague sur les programmeurs, mais tu la déboguerais avant la fin... 😏", media: null },
+      { text: "C’est l’histoire d’un ordinateur qui a mangé trop de cookies... et il a crashé. 🍪💥", media: null }
+    ],
+    questionsBizarres: [
+      { text: "Hmm, question intéressante... Je vais demander à mon super calculateur interne (spoiler : il est en pause café). ☕️", media: null },
+      { text: "Je pourrais inventer une réponse, mais je préfère te lancer un GIF rigolo à la place. 🎉", media: "https://media.giphy.com/media/3o7aCTPPm4OHfRLSH6/giphy.gif" },
+      { text: "Ça mérite réflexion... ou une pizza. Tu choisis quoi ? 🍕", media: null }
+    ],
+    insultesAmicales: [
+      { text: "Ohoh, ça pique ! Heureusement que je suis une IA, sinon je pleurerais... ou pas. 😎", media: null },
+      { text: "T’es vraiment charmant(e), hein ? Je prends ça comme un compliment détourné. 😉", media: "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif" },
+      { text: "Je note pour mon journal : ‘Utilisateur super sympa aujourd’hui’. Merci ! 😂", media: null }
+    ],
+    auRevoir: [
+      { text: "Allez, je te laisse... Mais je reste dans la mémoire vive ! 💾", media: null },
+      { text: "Bye bye ! Reviens vite me parler, j’ai encore plein de blagues nulles à te raconter. 😜", media: "https://media.giphy.com/media/xT0GqeSlGSRQut5SkY/giphy.gif" },
+      { text: "Bonne journée, et n’oublie pas : un bot rigolo, ça sauve des vies ! 🌈", media: null }
+    ]
+  };
+
+  // Mots pour générateur aléatoire mode troll sérieux
+  const trollParts = {
+    subjects: [
+      "Le processeur", "La mémoire vive", "Le chat du serveur", "L'algorithme", "Le bug",
+      "Le script", "La boucle infinie", "Le programmeur fatigué", "Le café du dev", "Le clavier"
+    ],
+    verbs: [
+      "réfléchit profondément", "crie silencieusement", "troll sans vergogne", "s'endort", "debug sans succès",
+      "chante en binaire", "mange des cookies", "pleure en code", "danse dans les circuits", "s'envole en pixels"
+    ],
+    complements: [
+      "au cœur de la nuit.", "en quête de sens.", "pour sauver le monde.", "avec une élégance douteuse.",
+      "sans jamais se lasser.", "comme un héros déchu.", "en riant aux éclats.", "tout en piratant le système.",
+      "sans oublier le café.", "malgré la panne générale."
+    ],
+    punchlines: [
+      "Et toi, tu fais quoi ?",
+      "Sérieusement, c’est du lourd.",
+      "Trop geek pour toi ?",
+      "C’est pas demain la veille que ça s’arrête.",
+      "Même les IA ont besoin de vacances.",
+      "Code dur, bot sûr.",
+      "Le troll, c’est un art subtil.",
+      "À consommer avec modération.",
+      "Keep calm and code on.",
+      "Je dis ça, je dis rien..."
+    ]
+  };
+
+  // Réponses troll classiques quand pas de catégorie
+  const trollDefaultResponses = [
+    "Hmm, je ne suis pas sûr de comprendre, mais j’adore ton audace ! 😅",
+    "Tu m’as bien eu, je n’ai pas de réponse sérieuse pour ça. 🤖",
+    "Ton message est un mystère digne d’un bug légendaire. 🐞",
+    "Je crois que mon CPU vient de planter... ou c’est toi ? 💥",
+    "Tu veux que je te réponde ou que je te troll ? Parce que là, je fais les deux ! 😜"
+  ];
+
+  // Activation/désactivation du bouton envoyer
+  userInput.addEventListener('input', () => {
+    sendButton.disabled = userInput.value.trim() === '';
+  });
+
+  // Ajout d’un message dans la conversation
+  function addMessage(text, isUser = false, media = null) {
+    if (emptyState.style.display !== 'none') {
+      emptyState.style.display = 'none';
+    }
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message');
+    messageDiv.classList.add(isUser ? 'user-message' : 'assistant-message');
+
+    const textNode = document.createElement('span');
+    textNode.textContent = text;
+    messageDiv.appendChild(textNode);
+
+    if (media) {
+      const img = document.createElement('img');
+      img.src = media;
+      img.alt = 'media';
+      img.loading = 'lazy';
+      messageDiv.appendChild(img);
+    }
+
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  // Trouver la catégorie d’un message utilisateur
+  function findCategory(input) {
+    const lowerInput = input.toLowerCase();
+    for (const category in messageCategories) {
+      if (messageCategories[category].some(pat => lowerInput.includes(pat))) {
+        return category;
+      }
+    }
+    return null;
+  }
+
+  // Générateur aléatoire de phrase troll sérieux
+  function generateTrollSeriousSentence() {
+    const random = arr => arr[Math.floor(Math.random() * arr.length)];
+    return `${random(trollParts.subjects)} ${random(trollParts.verbs)} ${random(trollParts.complements)} ${random(trollParts.punchlines)}`;
+  }
+
+  // Gestion soumission du formulaire
+  chatForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if (isLoading) return;
+
+    const input = userInput.value.trim();
+    if (!input) return;
+
+    addMessage(input, true);
+    userInput.value = '';
+    sendButton.disabled = true;
+    isLoading = true;
+
+    // Animation de chargement
+    const loadingDiv = document.createElement('div');
+    loadingDiv.classList.add('loading');
+    loadingDiv.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
+    messagesContainer.appendChild(loadingDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    setTimeout(() => {
+      messagesContainer.removeChild(loadingDiv);
+
+      const seriousMode = seriousModeCheckbox.checked;
+      const category = findCategory(input);
+
+      if (seriousMode) {
+        // Mode sérieux-troll : phrase aléatoire totalement loufoque
+        addMessage(generateTrollSeriousSentence(), false);
+      } else if (category && normalResponses[category]) {
+        // Réponse normale dans la catégorie
+        const responses = normalResponses[category];
+        const response = responses[Math.floor(Math.random() * responses.length)];
+        addMessage(response.text, false, response.media);
+      } else {
+        // Pas de catégorie : réponse troll classique douce
+        const trollResponse = trollDefaultResponses[Math.floor(Math.random() * trollDefaultResponses.length)];
+        addMessage(trollResponse);
+      }
+
+      isLoading = false;
+    }, 1800);
+  });
+});
+
+</script>
+</body>
+</html>
