@@ -53,11 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const chatForm = document.getElementById('chat-form');
   const userInput = document.getElementById('user-input');
   const sendButton = document.getElementById('send-button');
-  const seriousModeCheckbox = document.getElementById('serious-mode');
 
   let isLoading = false;
 
-  // Catégories et leurs patterns
   const messageCategories = {
     salutations: ['salut', 'bonjour', 'hello', 'coucou', 'hey', 'yo', 'bonsoir'],
     humeur: ['ça va', 'comment tu vas', 'tu vas bien', 'bien', 'mal', 'fatigué', 'heureux', 'triste'],
@@ -67,10 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
     auRevoir: ['bye', 'au revoir', 'à plus', 'ciao', 'bonne nuit', 'à bientôt']
   };
 
-  // Réponses classiques pour chaque catégorie
   const normalResponses = {
     salutations: [
-      { text: "Oh, te revoilà, le roi/la reine du clavier ! 👑", media: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTBzaTNrN3o3ajd0dDBrajNvZnY1cGVwaHowZnNnNDdrdnU2aXhkaSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/lDvEA2615Om0LhZlne/giphy.gif" },
+      { text: "Oh, te revoilà, le roi/la reine du clavier ! 👑", media: "https://media.giphy.com/media/3o6Zt8zb1NrRzW4jYs/giphy.gif" },
       { text: "Hey, toi ! Toujours aussi cool ou t’as juste mal dormi ? 😴", media: null },
       { text: "Salut ! Tu veux que je te raconte une blague de robot ? 🤖", media: null }
     ],
@@ -101,50 +98,18 @@ document.addEventListener('DOMContentLoaded', () => {
     ]
   };
 
-  // Mots pour générateur aléatoire mode troll sérieux
-  const trollParts = {
-    subjects: [
-      "Le processeur", "La mémoire vive", "Le chat du serveur", "L'algorithme", "Le bug",
-      "Le script", "La boucle infinie", "Le programmeur fatigué", "Le café du dev", "Le clavier"
-    ],
-    verbs: [
-      "réfléchit profondément", "crie silencieusement", "troll sans vergogne", "s'endort", "debug sans succès",
-      "chante en binaire", "mange des cookies", "pleure en code", "danse dans les circuits", "s'envole en pixels"
-    ],
-    complements: [
-      "au cœur de la nuit.", "en quête de sens.", "pour sauver le monde.", "avec une élégance douteuse.",
-      "sans jamais se lasser.", "comme un héros déchu.", "en riant aux éclats.", "tout en piratant le système.",
-      "sans oublier le café.", "malgré la panne générale."
-    ],
-    punchlines: [
-      "Et toi, tu fais quoi ?",
-      "Sérieusement, c’est du lourd.",
-      "Trop geek pour toi ?",
-      "C’est pas demain la veille que ça s’arrête.",
-      "Même les IA ont besoin de vacances.",
-      "Code dur, bot sûr.",
-      "Le troll, c’est un art subtil.",
-      "À consommer avec modération.",
-      "Keep calm and code on.",
-      "Je dis ça, je dis rien..."
-    ]
-  };
-
-  // Réponses troll classiques quand pas de catégorie
-  const trollDefaultResponses = [
-    "Hmm, je ne suis pas sûr de comprendre, mais j’adore ton audace ! 😅",
-    "Tu m’as bien eu, je n’ai pas de réponse sérieuse pour ça. 🤖",
-    "Ton message est un mystère digne d’un bug légendaire. 🐞",
-    "Je crois que mon CPU vient de planter... ou c’est toi ? 💥",
-    "Tu veux que je te réponde ou que je te troll ? Parce que là, je fais les deux ! 😜"
+  const defaultTrollResponses = [
+    "Hmm... Ton message est tellement deep qu'il faudrait un data scientist pour l'analyser 🔍🤯",
+    "Tu viens d’inventer un nouveau langage, non ? Je call ça le *code du chaos* 💥💬",
+    "Je suis une IA, pas un devin ! Mais continue, j'adore les surprises 🧙‍♂️✨",
+    "Si ton message était un bug... ce serait un chef-d'œuvre 🐛🎨",
+    "Erreur 404 : réponse sérieuse non trouvée. Tu veux un cookie à la place ? 🍪😄"
   ];
 
-  // Activation/désactivation du bouton envoyer
   userInput.addEventListener('input', () => {
     sendButton.disabled = userInput.value.trim() === '';
   });
 
-  // Ajout d’un message dans la conversation
   function addMessage(text, isUser = false, media = null) {
     if (emptyState.style.display !== 'none') {
       emptyState.style.display = 'none';
@@ -169,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
 
-  // Trouver la catégorie d’un message utilisateur
   function findCategory(input) {
     const lowerInput = input.toLowerCase();
     for (const category in messageCategories) {
@@ -180,13 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  // Générateur aléatoire de phrase troll sérieux
-  function generateTrollSeriousSentence() {
-    const random = arr => arr[Math.floor(Math.random() * arr.length)];
-    return `${random(trollParts.subjects)} ${random(trollParts.verbs)} ${random(trollParts.complements)} ${random(trollParts.punchlines)}`;
-  }
-
-  // Gestion soumission du formulaire
   chatForm.addEventListener('submit', e => {
     e.preventDefault();
     if (isLoading) return;
@@ -199,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton.disabled = true;
     isLoading = true;
 
-    // Animation de chargement
     const loadingDiv = document.createElement('div');
     loadingDiv.classList.add('loading');
     loadingDiv.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
@@ -209,20 +165,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       messagesContainer.removeChild(loadingDiv);
 
-      const seriousMode = seriousModeCheckbox.checked;
       const category = findCategory(input);
 
-      if (seriousMode) {
-        // Mode sérieux-troll : phrase aléatoire totalement loufoque
-        addMessage(generateTrollSeriousSentence(), false);
-      } else if (category && normalResponses[category]) {
-        // Réponse normale dans la catégorie
+      if (category && normalResponses[category]) {
         const responses = normalResponses[category];
         const response = responses[Math.floor(Math.random() * responses.length)];
         addMessage(response.text, false, response.media);
       } else {
-        // Pas de catégorie : réponse troll classique douce
-        const trollResponse = trollDefaultResponses[Math.floor(Math.random() * trollDefaultResponses.length)];
+        const trollResponse = defaultTrollResponses[Math.floor(Math.random() * defaultTrollResponses.length)];
         addMessage(trollResponse);
       }
 
@@ -230,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1800);
   });
 });
-
 </script>
 </body>
 </html>
